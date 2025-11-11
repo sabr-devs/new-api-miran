@@ -1,0 +1,74 @@
+{
+  "kind": "collectionType",
+  "collectionName": "main_magazines",
+  "info": {
+    "singularName": "main-magazine",
+    "pluralName": "main-magazines",
+    "displayName": "Main Magazine"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "hero_img": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "excerpt": {
+      "type": "text",
+      "required": true
+    },
+    "issue_number": {
+      "type": "string",
+      "required": true
+    },
+    "issue_date": {
+      "type": "string",
+      "required": true
+    },
+    "magazine_cover": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "pdf": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "download_count": {
+      "type": "biginteger"
+    },
+    "articles": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::article.article",
+      "mappedBy": "magazine"
+    },
+    "magazine_like": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::magazine-like.magazine-like",
+      "mappedBy": "magazine"
+    }
+  }
+}

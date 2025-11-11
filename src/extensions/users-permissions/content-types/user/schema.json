@@ -1,0 +1,123 @@
+{
+  "kind": "collectionType",
+  "collectionName": "up_users",
+  "info": {
+    "name": "user",
+    "description": "",
+    "singularName": "user",
+    "pluralName": "users",
+    "displayName": "User"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "username": {
+      "type": "string",
+      "minLength": 3,
+      "unique": true,
+      "configurable": false,
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "minLength": 6,
+      "configurable": false,
+      "required": true
+    },
+    "provider": {
+      "type": "string",
+      "configurable": false
+    },
+    "password": {
+      "type": "password",
+      "minLength": 6,
+      "configurable": false,
+      "private": true,
+      "searchable": false
+    },
+    "resetPasswordToken": {
+      "type": "string",
+      "configurable": false,
+      "private": true,
+      "searchable": false
+    },
+    "confirmationToken": {
+      "type": "string",
+      "configurable": false,
+      "private": true,
+      "searchable": false
+    },
+    "confirmed": {
+      "type": "boolean",
+      "default": false,
+      "configurable": false
+    },
+    "blocked": {
+      "type": "boolean",
+      "default": false,
+      "configurable": false
+    },
+    "role": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.role",
+      "inversedBy": "users",
+      "configurable": false
+    },
+    "efficacy_assessment": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::efficacy-assessment.efficacy-assessment",
+      "mappedBy": "user"
+    },
+    "fullname": {
+      "type": "string",
+      "required": true
+    },
+    "loginAttempts": {
+      "type": "integer",
+      "default": 0
+    },
+    "lockoutUntil": {
+      "type": "datetime"
+    },
+    "magazine_likes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::magazine-like.magazine-like",
+      "inversedBy": "users"
+    },
+    "user_book_marks": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::user-book-mark.user-book-mark",
+      "mappedBy": "user"
+    },
+    "is_admin": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "phone_number": {
+      "type": "string",
+      "required": false,
+      "minLength": 10,
+      "maxLength": 10
+    },
+    "pic": {
+      "type": "text"
+    },
+    "init_pass": {
+      "type": "boolean",
+      "default": false
+    },
+    "user_profile": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::user-profile.user-profile",
+      "mappedBy": "user"
+    }
+  }
+}

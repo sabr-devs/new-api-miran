@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "magazine_likes",
+  "info": {
+    "singularName": "magazine-like",
+    "pluralName": "magazine-likes",
+    "displayName": "Magazine Like"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "date": {
+      "type": "datetime"
+    },
+    "users": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "magazine_likes"
+    },
+    "magazine": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::main-magazine.main-magazine",
+      "inversedBy": "magazine_like"
+    }
+  }
+}

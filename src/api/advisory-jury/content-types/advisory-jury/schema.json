@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "advisory_juries",
+  "info": {
+    "singularName": "advisory-jury",
+    "pluralName": "advisory-juries",
+    "displayName": "Advisory jury"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "job_description": {
+      "type": "string",
+      "required": true
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

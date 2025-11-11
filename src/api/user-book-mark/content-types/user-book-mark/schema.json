@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_book_marks",
+  "info": {
+    "singularName": "user-book-mark",
+    "pluralName": "user-book-marks",
+    "displayName": "User BookMark"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "user_book_marks"
+    },
+    "bookmarks": {
+      "type": "component",
+      "component": "book-marks.user-book-marks-componenet",
+      "repeatable": true,
+      "required": false
+    }
+  }
+}

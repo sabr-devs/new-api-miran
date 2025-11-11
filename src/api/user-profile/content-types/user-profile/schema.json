@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_profiles",
+  "info": {
+    "singularName": "user-profile",
+    "pluralName": "user-profiles",
+    "displayName": "User Profile"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+   "attributes": {
+    "basic_info": {
+      "type": "json",
+      "required": false
+    },
+    "contact_information": {
+      "type": "json",
+      "required": false
+    },
+    "work_experience": {
+      "type": "json",
+      "required": false
+    },
+    "tasks_activities": {
+      "type": "json",
+      "required": false
+    },
+    "status": {
+      "type": "boolean",
+      "default": false,
+      "required": false
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "user_profile"
+    }
+  }
+}

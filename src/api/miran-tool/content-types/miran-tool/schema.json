@@ -1,0 +1,55 @@
+{
+  "kind": "collectionType",
+  "collectionName": "miran_tools",
+  "info": {
+    "singularName": "miran-tool",
+    "pluralName": "miran-tools",
+    "displayName": "Miran Tool"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+     "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "img": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "excerpt": {
+      "type": "text",
+      "required": true
+    },
+    "issue_number": {
+      "type": "string",
+      "required": true
+    },
+    "pdf": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "download_count": {
+      "type": "biginteger"
+    },
+    "issue_date": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

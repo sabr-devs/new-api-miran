@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "efficacy_assessments",
+  "info": {
+    "singularName": "efficacy-assessment",
+    "pluralName": "efficacy-assessments",
+    "displayName": "Efficacy Assessment"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "answers": {
+      "type": "json"
+    },
+    "results": {
+      "type": "json"
+    }
+    
+  }
+}

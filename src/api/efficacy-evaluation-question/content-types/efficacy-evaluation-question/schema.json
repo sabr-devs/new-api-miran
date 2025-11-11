@@ -1,0 +1,19 @@
+{
+  "kind": "singleType",
+  "collectionName": "efficacy_evaluation_questions",
+  "info": {
+    "singularName": "efficacy-evaluation-question",
+    "pluralName": "efficacy-evaluation-questions",
+    "displayName": "Efficacy evaluation question"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "questions": {
+      "type": "json",
+      "required": true
+    }
+  }
+}

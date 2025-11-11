@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_book_marks_user_book_marks_componenets",
+  "info": {
+    "displayName": "User BookMarksComponenet"
+  },
+  "options": {},
+  "attributes": {
+    "url": {
+      "type": "string",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    }
+  }
+}
