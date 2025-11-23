@@ -15,7 +15,7 @@
       "type": "string",
       "required": true
     },
-      "article_image": {
+    "article_image": {
       "type": "media",
       "multiple": false,
       "required": true,
@@ -26,12 +26,6 @@
     "article_excerpt": {
       "type": "text",
       "required": true
-    },
-     "magazine": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::main-magazine.main-magazine",
-      "inversedBy": "articles"
     },
     "authors": {
       "type": "relation",

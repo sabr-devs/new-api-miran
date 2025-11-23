@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pdf_files",
+  "info": {
+    "singularName": "pdf-file",
+    "pluralName": "pdf-files",
+    "displayName": "pdf_file"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "downloads_count": {
+      "type": "integer",
+      "required": false
+    },
+    "title": {
+      "type": "string"
+    },
+    "file": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "members_only": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

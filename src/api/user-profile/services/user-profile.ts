@@ -2,7 +2,7 @@
  * user-profile service
  */
 
-import { factories } from '@strapi/strapi';
+import { factories } from "@strapi/strapi";
 const getConfirmed = (users) => {
   return users.filter((user) => user.confirmed);
 };
@@ -29,8 +29,63 @@ const getTodaysNotConfirmedRegisteredUsers = (users) => {
         new Date().toISOString().split("T")[0] && !user?.confirmed
   );
 };
-export default factories.createCoreService('api::user-profile.user-profile', ({ strapi }) => ({
-        findOneByUser: async (userId) => {
+
+// --- Helper function for validation
+
+const checkProfileCompletion = (profileData, incomingUpdate) => {
+  // Merge existing data with the incoming update for the complete picture
+  // The incomingUpdate object contains the key being updated (e.g., { basic_info: {...} })
+  const data = {
+    ...profileData,
+    ...incomingUpdate,
+  };
+
+  // 1. Basic Info Validation
+  const isBasicInfoComplete =
+    data.basic_info?.fullname?.trim() &&
+    data.basic_info?.age &&
+    data.basic_info?.study &&
+    data.basic_info?.marital;
+
+  // 2. Contact Info Validation
+  const isContactInfoComplete =
+    data.contact_information?.address?.trim() &&
+    data.contact_information?.city &&
+    data.contact_information?.number?.trim();
+
+  // 3. Work Experience Validation
+  let isWorkExperienceComplete = false;
+  const experiences = data.work_experience?.experience || [];
+  if (experiences.length > 0) {
+    // Check if at least one experience entry is fully valid
+    const validExperiences = experiences.filter(
+      (exp) =>
+        exp.fieldOfWork?.trim() &&
+        exp.workplace?.trim() &&
+        exp.YearsOfExperience.trim() &&
+        exp.ageGroup?.trim()
+    );
+    if (validExperiences.length > 0) {
+      isWorkExperienceComplete = true;
+    }
+  }
+
+  // 4. Tasks Activities Validation (Checking for languages array length)
+  const isTasksActivitiesComplete =
+    data.tasks_activities?.languages?.length > 0;
+
+  // Profile is complete only if ALL sections are complete
+  return (
+    isBasicInfoComplete &&
+    isContactInfoComplete &&
+    isWorkExperienceComplete &&
+    isTasksActivitiesComplete
+  );
+};
+export default factories.createCoreService(
+  "api::user-profile.user-profile",
+  ({ strapi }) => ({
+    findOneByUser: async (userId) => {
       // console.log(userId)
       const profil = await strapi.entityService.findMany(
         "api::user-profile.user-profile",
@@ -263,35 +318,158 @@ export default factories.createCoreService('api::user-profile.user-profile', ({ 
       };
       return usersInfo;
     },
-    usersAssessments  : async () => {
+    usersAssessments: async () => {
       const assessments = await strapi.entityService.findMany(
         "api::efficacy-assessment.efficacy-assessment",
         {
           populate: {
             user: {
-              fields : ['email','fullname'],
+              fields: ["email", "fullname"],
             },
           },
-          sort: ['updatedAt:desc'],
+          sort: ["updatedAt:desc"],
         }
       );
       return assessments;
     },
-    getUserAssessments : async (ctx) => {
-      console.log(ctx.params.id)
+    getUserAssessments: async (ctx) => {
+      console.log(ctx.params.id);
       const assessments = await strapi.entityService.findMany(
         "api::efficacy-assessment.efficacy-assessment",
         {
           populate: {
             user: {
-              fields : ['email','fullname','createdAt'],
+              fields: ["email", "fullname", "createdAt"],
             },
           },
           filters: {
-            id:ctx.params.id,
+            id: ctx.params.id,
           },
         }
       );
       return assessments;
     },
-}));
+    // New services Start Here
+    getMyProfile: async (ctx) => {
+      try {
+        const userProfile = await strapi
+          .documents("api::user-profile.user-profile")
+          .findMany({
+            filters: { user: ctx.state.user.id },
+          });
+        // console.log("userProfile", userProfile);
+        if (!userProfile || !userProfile.length) {
+          const newProfile = await strapi
+            .documents("api::user-profile.user-profile")
+            .create({
+              data: {
+                user: ctx.state.user.id,
+                contact_information: {
+                  email: ctx.state.user.email,
+                },
+              },
+            });
+          return {
+            success: true,
+            data: newProfile,
+          };
+        }
+        return {
+          success: true,
+          data: userProfile[0],
+        };
+      } catch (error) {
+        throw error;
+      }
+    },
+    updateMyProfile: async (ctx) => {
+      try {
+        const userId = ctx.state.user.id;
+        const incomingData = ctx.request.body;
+
+        // 1. Find the existing user profile
+        const userProfiles = await strapi
+          .documents("api::user-profile.user-profile")
+          .findMany({
+            filters: { user: userId },
+          });
+
+        if (!userProfiles || userProfiles.length === 0) {
+          return {
+            success: false,
+            message: "User profile not found",
+          };
+        }
+
+        const currentProfile = userProfiles[0];
+        const profileDocumentId = currentProfile.documentId;
+        const currentProfileStatus = currentProfile.profile_status || false;
+
+        // 2. Check for completion *after* applying the incoming update
+        const updatedProfileDataForCheck = {
+          basic_info: currentProfile.basic_info,
+          contact_information: currentProfile.contact_information,
+          work_experience: currentProfile.work_experience,
+          tasks_activities: currentProfile.tasks_activities,
+          ...incomingData, // Overwrite with the fields being updated
+        };
+
+        const isProfileComplete = checkProfileCompletion(
+          updatedProfileDataForCheck,
+          {}
+        );
+
+        // 3. Determine the final profile_status to save
+        let newProfileStatus = currentProfileStatus;
+
+        if (isProfileComplete && !currentProfileStatus) {
+          // Profile is now complete and was previously incomplete
+          newProfileStatus = true;
+          // Add profile_status to the incoming data for the update call
+          incomingData.profile_status = newProfileStatus;
+        }
+
+        // Ensure profile_status is not accidentally set to false if it was true and validation is met
+        if (currentProfileStatus && isProfileComplete) {
+          incomingData.profile_status = true;
+        }
+
+        // 4. Update the User Profile document
+        const updatedProfile = await strapi
+          .documents("api::user-profile.user-profile")
+          .update({
+            documentId: profileDocumentId,
+            data: incomingData,
+          });
+
+        // 5. Update the core Strapi User table if the status changed to true
+        if (newProfileStatus && !currentProfileStatus) {
+          await strapi.query("plugin::users-permissions.user").update({
+            where: { id: userId },
+            data: { profile_status: true },
+          });
+          console.log(
+            `User ${userId} profile_status updated to true in core user table.`
+          );
+        }
+
+        // 6. Return the updated profile data (including the new profile_status)
+        return {
+          success: true,
+          // Attach the final status to the returned data for the NextAuth client check
+          data: {
+            ...updatedProfile,
+            profile_status: newProfileStatus, // Ensure the status is explicitly returned
+          },
+        };
+      } catch (error) {
+        console.error("Error in updateMyProfile:", error);
+        return {
+          success: false,
+          message: "An internal error occurred during profile update.",
+          error: error.message,
+        };
+      }
+    },
+  })
+);

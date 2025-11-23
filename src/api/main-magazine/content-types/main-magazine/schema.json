@@ -58,17 +58,21 @@
     "download_count": {
       "type": "biginteger"
     },
-    "articles": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::article.article",
-      "mappedBy": "magazine"
-    },
     "magazine_like": {
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::magazine-like.magazine-like",
       "mappedBy": "magazine"
+    },
+    "sections": {
+      "type": "component",
+      "component": "sections.section-items",
+      "repeatable": true
+    },
+    "pdf_file": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::pdf-file.pdf-file"
     }
   }
 }

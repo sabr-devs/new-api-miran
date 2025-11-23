@@ -81,7 +81,7 @@ module.exports = (plugin) => {
         }
         if (provider === "google") {
           const { access_token } = ctx.query;
-
+          console.log("Access Token:", access_token);
           try {
             // Fetch user info from Google
             const googleRes = await axios.get(
@@ -165,102 +165,102 @@ module.exports = (plugin) => {
           await rawAuth.callback(ctx);
         }
       },
-      // register: async (ctx) => {
-      //   const { email, username, password, fullname,governorate,region,phone } = ctx.request.body;
-      //   if( !email || !username || !password || !fullname || !governorate || !region || !phone){
-      //     return ctx.send({
-      //       success: false,
-      //       message: "All fields are required",
-      //     });
-      //   }
-      //   const existingUser = await strapi
-      //     .query("plugin::users-permissions.user")
-      //     .findOne({
-      //       where: { email },
-      //     });
-      //   if (existingUser) {
-      //     return ctx.send({
-      //       success: false,
-      //       message: "User already exists",
-      //     });
-      //   }
-      //   const authenticatedRole = await strapi
-      //     .query("plugin::users-permissions.role")
-      //     .findOne({
-      //       where: { type: "authenticated" },
-      //     });
+      register: async (ctx) => {
+        const { email, username, password, fullname,governorate,region,phone } = ctx.request.body;
+        if( !email || !username || !password || !fullname || !governorate || !region || !phone){
+          return ctx.send({
+            success: false,
+            message: "All fields are required",
+          });
+        }
+        const existingUser = await strapi
+          .query("plugin::users-permissions.user")
+          .findOne({
+            where: { email },
+          });
+        if (existingUser) {
+          return ctx.send({
+            success: false,
+            message: "User already exists",
+          });
+        }
+        const authenticatedRole = await strapi
+          .query("plugin::users-permissions.role")
+          .findOne({
+            where: { type: "authenticated" },
+          });
 
-      //   if (!authenticatedRole) {
-      //     strapi.log.error("Authenticated role not found in the database.");
-      //     return ctx.internalServerError(
-      //       "Authentication service is currently unavailable. Please try again later."
-      //     );
-      //   }
-      //   const addUser = await strapi
-      //     .documents("plugin::users-permissions.user")
-      //     .create({
-      //       data: {
-      //         email,
-      //         username,
-      //         password,
-      //         fullname,
-      //         role: authenticatedRole.id, 
-      //         provider: "local",
-      //         init_pass: false,
-      //         otp_sent: 1,
-      //         governorate,
-      //         region,
-      //         phone
-      //       },
-      //     });
-      //   const now = new Date(new Date().toISOString());
-      //   const expiresAt = addMinutes(now, 3);
-      //   const code = randomInt(1000_000).toString().padStart(6, "0");
+        if (!authenticatedRole) {
+          strapi.log.error("Authenticated role not found in the database.");
+          return ctx.internalServerError(
+            "Authentication service is currently unavailable. Please try again later."
+          );
+        }
+        const addUser = await strapi
+          .documents("plugin::users-permissions.user")
+          .create({
+            data: {
+              email,
+              username,
+              password,
+              fullname,
+              role: authenticatedRole.id, 
+              provider: "local",
+              init_pass: false,
+              otp_sent: 1,
+              governorate,
+              region,
+              phone
+            },
+          });
+        const now = new Date(new Date().toISOString());
+        const expiresAt = addMinutes(now, 3);
+        const code = randomInt(1000_000).toString().padStart(6, "0");
 
-      //   const otpEntry = await strapi.documents("api::otp.otp").create({
-      //     data: {
-      //       code,
-      //       expiresAt,
-      //       user: addUser.id,
-      //     },
-      //   });
-      //   if (!otpEntry) return ctx.send({ success: false });
-      //   try {
-      //     // Load the .hbs template file
-      //     const templatePath = path.join(
-      //       process.cwd(),
-      //       "src",
-      //       "email-templates",
-      //       "otp-email.hbs"
-      //     );
-      //     const templateContent = fs.readFileSync(templatePath, "utf8");
-      //     // Compile the template with Handlebars
-      //     const template = handlebars.compile(templateContent);
+        const otpEntry = await strapi.documents("api::otp.otp").create({
+          data: {
+            code,
+            expiresAt,
+            user: addUser.id,
+          },
+        });
+        if (!otpEntry) return ctx.send({ success: false });
+        try {
+          // Load the .hbs template file
+          const templatePath = path.join(
+            process.cwd(),
+            "src",
+            "email-templates",
+            "otp-email.hbs"
+          );
+          const templateContent = fs.readFileSync(templatePath, "utf8");
+          // Compile the template with Handlebars
+          const template = handlebars.compile(templateContent);
 
-      //     // Render the template with dynamic data
-      //     const html = template({
-      //       code, // Pass the OTP code
-      //       fullname: addUser.fullname, // Pass other dynamic data
-      //       email: addUser.email,
-      //     });
+          // Render the template with dynamic data
+          const html = template({
+            code, // Pass the OTP code
+            fullname: addUser.fullname, // Pass other dynamic data
+            email: addUser.email,
+          });
 
-      //     // Send the email
-      //     await strapi.plugin("email").service("email").send({
-      //       to: addUser.email,
-      //       from: "info@community-execution.com",
-      //       subject: "رمز التحقق ـ منصة تنفيذ",
-      //       html, // Use the rendered HTML
-      //     });
+          // Send the email
+          await strapi.plugin("email").service("email").send({
+            to: addUser.email,
+            from: "info@community-execution.com",
+            subject: "رمز التحقق ـ منصة تنفيذ",
+            html, // Use the rendered HTML
+          });
 
-      //     return ctx.send({
-      //       success: true,
-      //       email: addUser.email,
-      //     });
-      //   } catch (error) {
-      //     strapi.log.error("Failed to send email:", error);
-      //     return ctx.internalServerError("Failed to send OTP email.");
-      //   }
-      // },
+          return ctx.send({
+            success: true,
+            email: addUser.email,
+          });
+        } catch (error) {
+          strapi.log.error("Failed to send email:", error);
+          return ctx.internalServerError("Failed to send OTP email.");
+        }
+      },
       changePassword: async (ctx) => {
         const { init_pass } = ctx.request.body;
         // console.log(init_pass);

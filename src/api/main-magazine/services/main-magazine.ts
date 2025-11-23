@@ -7,140 +7,115 @@ import { factories } from "@strapi/strapi";
 export default factories.createCoreService(
   "api::main-magazine.main-magazine",
   ({ strapi }) => ({
-    findAllMagazinesHero: async () => {
-      const magazines = await strapi.entityService.findMany(
-        "api::main-magazine.main-magazine",
-        {
-          status: "published",
-          sort: ["createdAt:desc"],
-
-          fields: ["title", "excerpt", "slug", "issue_number", "issue_date"],
-          populate: {
-            hero_img: {
-              fields: ["url", "width", "height"],
-            },
-          },
-        }
-      );
-      return magazines;
-    },
-    findAllMagazineForMagazinePage: async () => {
-      const magazines = await strapi.entityService.findMany(
-        "api::main-magazine.main-magazine",
-        {
-          sort: ["createdAt:desc"],
-          fields: ["title", "slug", "issue_number", "issue_date"],
-          populate: {
-            magazine_cover: {
-              fields: ["url", "width", "height"],
-            },
-            articles: {
-            //   fields: ["article_title", "article_excerpt", "slug"],
-              populate: {
-                article_image: {
-                  fields: ["url", "width", "height"],
-                },
-                authors: {
-                  fields: ["author_name", "slug"],
-                  populate: {
-                    author_image: {
-                      fields: ["url", "width", "height"],
-                    },
-                  },
-                },
-              },
-            },
-          },
-        }
-      );
-      return magazines;
-    },
-    getMagazineIssueInfo: async (slug) => {
-      const magazine = await strapi.entityService.findMany(
-        "api::main-magazine.main-magazine",
-        {
-          filters: {
-            slug: {
-              $eq: slug,
-            },
-          },
-          fields: [
-            "title",
-            "excerpt",
-            "slug",
-            "issue_number",
-            "issue_date",
-            "download_count",
-          ],
-          populate: {
-            magazine_cover: {
-              fields: ["url", "width", "height"],
-            },
-            articles: {
-            //   fields: ["article_title", "article_excerpt", "slug"],
-              populate: {
-                article_image: {
-                  fields: ["url", "width", "height"],
-                },
-                authors: {
-                  fields: ["author_name", "slug"],
-                  populate: {
-                    author_image: {
-                      fields: ["url", "width", "height"],
-                    },
-                  },
-                },
-              },
-            },
-          },
-        }
-      );
-      if (magazine) {
-        return magazine;
-      }
-      return null;
-    },
-    getMagazineIssuePdf: async (userId, slug) => {
-      const isAllowed = await strapi
-        .service("api::user-profile.user-profile")
-        .findOneByUser(userId);
-      console.log(isAllowed[0]?.status);
-      if (isAllowed[0]?.status) {
-        const magazinePdf = await strapi.entityService.findMany(
-          "api::main-magazine.main-magazine",
-          {
-            filters: {
-              slug: {
-                $eq: slug,
-              },
-            },
-            fields: ["download_count"],
+    getMiranMagazine: async (ctx) => {
+      try {
+        const { page = 1, pageSize = 10, sort = "createdAt:desc" } = ctx.query;
+        const filters: any = {};
+        const magazines = await strapi
+          .documents("api::main-magazine.main-magazine")
+          .findMany({
+            filters,
             populate: {
-              pdf: {
+              magazine_cover: {
                 fields: ["url", "width", "height"],
               },
-            },
-          }
-        );
-        if (magazinePdf) {
-          const updateMagazinePdf = await strapi.entityService.update(
-            "api::main-magazine.main-magazine",
-            magazinePdf[0].id,
-            {
-              data: {
-                download_count: +magazinePdf[0].download_count + 1,
+              magazine_like: {
+                populate: {
+                  users: {
+                    fields: ["id", "fullname", "email"],
+                  },
+                },
               },
-            }
-          );
-
+            },
+            start: (page - 1) * pageSize,
+            limit: pageSize,
+            sort,
+          });
+        if (!magazines) {
           return {
-            ...magazinePdf[0],
-            download_count: updateMagazinePdf.download_count,
+            success: false,
+            message: "No magazines found",
           };
         }
-        return null;
-      } else {
-        return null;
+        // calculate like count for each magazine
+        const magazinesWithLikeCount = magazines.map((magazine) => {
+          const likeCount = magazine?.magazine_like?.users?.length || 0;
+          // convert magazine to plain object to allow editing
+          const magazineData = JSON.parse(JSON.stringify(magazine));
+          // remove magazine_like field
+          delete magazineData.magazine_like;
+          // add like count instead
+          magazineData.magazineLikeCount = likeCount;
+          return magazineData;
+        });
+        return {
+          success: true,
+          data: magazinesWithLikeCount,
+          meta: {
+            page: parseInt(page),
+            pageSize: parseInt(pageSize),
+            total: await strapi
+              .documents("api::main-magazine.main-magazine")
+              .count(filters),
+          },
+        };
+      } catch (error) {
+        throw error;
+      }
+    },
+    getMiranMagazineBySlug: async (ctx) => {
+      try {
+        const { slug } = ctx.params;
+        const magazine = await strapi
+          .documents("api::main-magazine.main-magazine")
+          .findMany({
+            filters: { slug: slug },
+            populate: {
+              magazine_cover: {
+                fields: ["url", "width", "height"],
+              },
+              magazine_like: {
+                populate: {
+                  users: {
+                    fields: ["id", "fullname", "email"],
+                    populate: { user_book_marks: true },
+                  },
+                },
+              },
+              pdf_file: {
+                populate: {
+                  file: {
+                    fields: ["url", "width", "height"],
+                  },
+                },
+              },
+              sections: true,
+            },
+          });
+        if (!magazine || magazine.length === 0) {
+          return {
+            success: false,
+            message: "Magazine not found",
+          };
+        }
+        // calculate like count
+        const magazineLikeCount =
+          magazine[0]?.magazine_like?.users?.length || 0;
+
+        // convert magazine[0] to plain object to allow editing
+        const magazineData = JSON.parse(JSON.stringify(magazine[0]));
+
+        // remove magazine_like field
+        delete magazineData.magazine_like;
+
+        // add like count instead
+        magazineData.magazineLikeCount = magazineLikeCount;
+        return {
+          success: true,
+          data: magazineData,
+        };
+      } catch (error) {
+        throw error;
       }
     },
   })

@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_sections_section_items",
+  "info": {
+    "displayName": "section-items"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "page": {
+      "type": "integer"
+    },
+    "authors": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    }
+  },
+  "config": {}
+}

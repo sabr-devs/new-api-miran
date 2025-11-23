@@ -1,0 +1,7 @@
+/**
+ * evidence-like router
+ */
+
+import { factories } from '@strapi/strapi';
+
+export default factories.createCoreRouter('api::evidence-like.evidence-like');

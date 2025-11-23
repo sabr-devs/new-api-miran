@@ -11,7 +11,7 @@
   },
   "pluginOptions": {},
   "attributes": {
-     "name": {
+    "name": {
       "type": "string",
       "required": true
     },
@@ -50,6 +50,29 @@
     "issue_date": {
       "type": "string",
       "required": true
+    },
+    "tool_like": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::tool-like.tool-like",
+      "inversedBy": "tool"
+    },
+    "tool_cover": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+        "sections": {
+      "type": "component",
+      "component": "sections.section-items",
+      "repeatable": true
+    },
+    "pdf_file": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::pdf-file.pdf-file"
     }
   }
 }

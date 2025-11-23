@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "evidence_likes",
+  "info": {
+    "singularName": "evidence-like",
+    "pluralName": "evidence-likes",
+    "displayName": "Evidence Like"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "users": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "evidence_likes"
+    },
+    "evidence": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::miran-evidence.miran-evidence",
+      "inversedBy": "evidence_like"
+    }
+  }
+}

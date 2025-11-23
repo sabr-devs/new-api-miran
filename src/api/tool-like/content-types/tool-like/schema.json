@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "tool_likes",
+  "info": {
+    "singularName": "tool-like",
+    "pluralName": "tool-likes",
+    "displayName": "Tool Like"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "users": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "tool_likes"
+    },
+    "tool": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::miran-tool.miran-tool",
+      "mappedBy": "tool_like"
+    }
+  }
+}

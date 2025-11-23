@@ -446,7 +446,7 @@ export interface ApiAdvisoryJuryAdvisoryJury
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     image: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
-    job_description: Schema.Attribute.String & Schema.Attribute.Required;
+    job_description: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -455,6 +455,7 @@ export interface ApiAdvisoryJuryAdvisoryJury
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
+    sort_order: Schema.Attribute.Integer;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -485,10 +486,6 @@ export interface ApiArticleArticle extends Struct.CollectionTypeSchema {
       'api::article.article'
     > &
       Schema.Attribute.Private;
-    magazine: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::main-magazine.main-magazine'
-    >;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -592,6 +589,42 @@ export interface ApiEfficacyEvaluationQuestionEfficacyEvaluationQuestion
   };
 }
 
+export interface ApiEvidenceLikeEvidenceLike
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'evidence_likes';
+  info: {
+    displayName: 'Evidence Like';
+    pluralName: 'evidence-likes';
+    singularName: 'evidence-like';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    evidence: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::miran-evidence.miran-evidence'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::evidence-like.evidence-like'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users: Schema.Attribute.Relation<
+      'manyToMany',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
 export interface ApiMagazineLikeMagazineLike
   extends Struct.CollectionTypeSchema {
   collectionName: 'magazine_likes';
@@ -607,7 +640,6 @@ export interface ApiMagazineLikeMagazineLike
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    date: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -641,7 +673,6 @@ export interface ApiMainMagazineMainMagazine
     draftAndPublish: true;
   };
   attributes: {
-    articles: Schema.Attribute.Relation<'oneToMany', 'api::article.article'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -663,7 +694,9 @@ export interface ApiMainMagazineMainMagazine
       'api::magazine-like.magazine-like'
     >;
     pdf: Schema.Attribute.Media<'files'>;
+    pdf_file: Schema.Attribute.Relation<'oneToOne', 'api::pdf-file.pdf-file'>;
     publishedAt: Schema.Attribute.DateTime;
+    sections: Schema.Attribute.Component<'sections.section-items', true>;
     slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
@@ -688,6 +721,11 @@ export interface ApiMiranEvidenceMiranEvidence
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     download_count: Schema.Attribute.BigInteger;
+    evidence_cover: Schema.Attribute.Media<'images'>;
+    evidence_like: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::evidence-like.evidence-like'
+    >;
     excerpt: Schema.Attribute.Text & Schema.Attribute.Required;
     img: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
     issue_date: Schema.Attribute.String & Schema.Attribute.Required;
@@ -700,7 +738,9 @@ export interface ApiMiranEvidenceMiranEvidence
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     pdf: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    pdf_file: Schema.Attribute.Relation<'oneToOne', 'api::pdf-file.pdf-file'>;
     publishedAt: Schema.Attribute.DateTime;
+    sections: Schema.Attribute.Component<'sections.section-items', true>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -735,11 +775,112 @@ export interface ApiMiranToolMiranTool extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     name: Schema.Attribute.String & Schema.Attribute.Required;
     pdf: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    pdf_file: Schema.Attribute.Relation<'oneToOne', 'api::pdf-file.pdf-file'>;
     publishedAt: Schema.Attribute.DateTime;
+    sections: Schema.Attribute.Component<'sections.section-items', true>;
     slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    tool_cover: Schema.Attribute.Media<'images'>;
+    tool_like: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::tool-like.tool-like'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+  };
+}
+
+export interface ApiOtpOtp extends Struct.CollectionTypeSchema {
+  collectionName: 'otps';
+  info: {
+    description: '';
+    displayName: 'OTP';
+    pluralName: 'otps';
+    singularName: 'otp';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    code: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    expiresAt: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::otp.otp'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'oneToOne',
+      'plugin::users-permissions.user'
+    >;
+  };
+}
+
+export interface ApiPdfFilePdfFile extends Struct.CollectionTypeSchema {
+  collectionName: 'pdf_files';
+  info: {
+    displayName: 'pdf_file';
+    pluralName: 'pdf-files';
+    singularName: 'pdf-file';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    downloads_count: Schema.Attribute.Integer;
+    file: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pdf-file.pdf-file'
+    > &
+      Schema.Attribute.Private;
+    members_only: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    publishedAt: Schema.Attribute.DateTime;
+    title: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiToolLikeToolLike extends Struct.CollectionTypeSchema {
+  collectionName: 'tool_likes';
+  info: {
+    displayName: 'Tool Like';
+    pluralName: 'tool-likes';
+    singularName: 'tool-like';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::tool-like.tool-like'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    tool: Schema.Attribute.Relation<'oneToOne', 'api::miran-tool.miran-tool'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    users: Schema.Attribute.Relation<
+      'manyToMany',
+      'plugin::users-permissions.user'
+    >;
   };
 }
 
@@ -801,8 +942,9 @@ export interface ApiUserProfileUserProfile extends Struct.CollectionTypeSchema {
       'api::user-profile.user-profile'
     > &
       Schema.Attribute.Private;
+    profile_status: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     publishedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     tasks_activities: Schema.Attribute.JSON;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1324,6 +1466,10 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    evidence_likes: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::evidence-like.evidence-like'
+    >;
     fullname: Schema.Attribute.String & Schema.Attribute.Required;
     init_pass: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     is_admin: Schema.Attribute.Boolean &
@@ -1352,12 +1498,18 @@ export interface PluginUsersPermissionsUser
         minLength: 10;
       }>;
     pic: Schema.Attribute.Text;
+    profile_status: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     resetPasswordToken: Schema.Attribute.String & Schema.Attribute.Private;
     role: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.role'
+    >;
+    tool_likes: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::tool-like.tool-like'
     >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -1395,10 +1547,14 @@ declare module '@strapi/strapi' {
       'api::author.author': ApiAuthorAuthor;
       'api::efficacy-assessment.efficacy-assessment': ApiEfficacyAssessmentEfficacyAssessment;
       'api::efficacy-evaluation-question.efficacy-evaluation-question': ApiEfficacyEvaluationQuestionEfficacyEvaluationQuestion;
+      'api::evidence-like.evidence-like': ApiEvidenceLikeEvidenceLike;
       'api::magazine-like.magazine-like': ApiMagazineLikeMagazineLike;
       'api::main-magazine.main-magazine': ApiMainMagazineMainMagazine;
       'api::miran-evidence.miran-evidence': ApiMiranEvidenceMiranEvidence;
       'api::miran-tool.miran-tool': ApiMiranToolMiranTool;
+      'api::otp.otp': ApiOtpOtp;
+      'api::pdf-file.pdf-file': ApiPdfFilePdfFile;
+      'api::tool-like.tool-like': ApiToolLikeToolLike;
       'api::user-book-mark.user-book-mark': ApiUserBookMarkUserBookMark;
       'api::user-profile.user-profile': ApiUserProfileUserProfile;
       'api::webinar.webinar': ApiWebinarWebinar;

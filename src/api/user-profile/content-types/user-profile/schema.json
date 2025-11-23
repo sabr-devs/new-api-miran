@@ -10,7 +10,7 @@
     "draftAndPublish": false
   },
   "pluginOptions": {},
-   "attributes": {
+  "attributes": {
     "basic_info": {
       "type": "json",
       "required": false
@@ -27,10 +27,10 @@
       "type": "json",
       "required": false
     },
-    "status": {
+    "profile_status": {
       "type": "boolean",
-      "default": false,
-      "required": false
+      "required": false,
+      "default": false
     },
     "user": {
       "type": "relation",

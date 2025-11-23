@@ -97,14 +97,14 @@
     },
     "is_admin": {
       "type": "boolean",
-      "default": false,
-      "required": true
+      "required": true,
+      "default": false
     },
     "phone_number": {
       "type": "string",
-      "required": false,
       "minLength": 10,
-      "maxLength": 10
+      "maxLength": 10,
+      "required": false
     },
     "pic": {
       "type": "text"
@@ -118,6 +118,22 @@
       "relation": "oneToOne",
       "target": "api::user-profile.user-profile",
       "mappedBy": "user"
+    },
+    "tool_likes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::tool-like.tool-like",
+      "inversedBy": "users"
+    },
+    "evidence_likes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::evidence-like.evidence-like",
+      "mappedBy": "users"
+    },
+    "profile_status": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

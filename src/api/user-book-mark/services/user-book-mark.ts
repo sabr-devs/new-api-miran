@@ -4,8 +4,13 @@
 
 import { factories } from "@strapi/strapi";
 function removeItemById(arr, idToRemove) {
-  // Use Array.prototype.filter to create a new array without the item with the specified id
-  const newArray = arr.filter((item) => item.id !== idToRemove);
+  // Convert idToRemove to number for proper comparison
+  const id = Number(idToRemove);
+  // console.log('arr', arr);
+  // console.log("idToRemove", idToRemove, "as number:", id);
+
+  const newArray = arr.filter((item) => item.id !== id);
+  // console.log('newArray', newArray);
   return newArray;
 }
 function isUrlFound(arr, urlToFind) {
@@ -20,109 +25,139 @@ function removeItemByUrl(arr, url) {
 export default factories.createCoreService(
   "api::user-book-mark.user-book-mark",
   ({ strapi }) => ({
-    async getUserBookmarks(userId) {
-      return await strapi.entityService.findMany(
-        "api::user-book-mark.user-book-mark",
-        {
-          filters: {
-            user: {
-              id: userId,
-            },
-          },
-          populate: {
-            bookmarks: {
-              fields: ["url", "title"],
-            },
-          },
-        }
-      );
-    },
-    async deleteBookmark(userId, bookmarkId) {
-      const userBookmark = await strapi
-        .service("api::user-book-mark.user-book-mark")
-        .getUserBookmarks(userId);
-      console.log(userBookmark[0]?.bookmarks, bookmarkId);
-      if (userBookmark && userBookmark.length > 0) {
-        const updatedBookmarks = removeItemById(
-          userBookmark[0]?.bookmarks,
-          bookmarkId
-        );
-        console.log(updatedBookmarks);
-        await strapi.entityService.update(
-          "api::user-book-mark.user-book-mark",
-          userBookmark[0]?.id,
-          {
-            data: {
-              bookmarks: updatedBookmarks,
-            },
-          }
-        );
-        return updatedBookmarks;
-      } else {
-        return "not found";
+    // New Service Method
+    fetchUserBookmarks: async (ctx) => {
+      const userId = ctx.state.user.id;
+      try {
+        const userBookmarks = await strapi
+          .documents("api::user-book-mark.user-book-mark")
+          .findMany({
+            filters: { user: { id: userId } },
+            populate: ["bookmarks"],
+          });
+        return {
+          success: true,
+          data: userBookmarks,
+        };
+      } catch (error) {
+        throw error;
       }
     },
-    async addBookmark(userId, bookmark) {
-      const userBookmark = await strapi
-        .service("api::user-book-mark.user-book-mark")
-        .getUserBookmarks(userId);
-      if (userBookmark?.length === 0) {
-        const newBookmark = await strapi.entityService.create(
-          "api::user-book-mark.user-book-mark",
-          {
+    deleteUserBookmark: async (ctx) => {
+      const bookmarkId = ctx.params.id;
+      const userId = ctx.state.user.id;
+      // console.log("bookmarkId", bookmarkId);
+      try {
+        const userBookmark = await strapi
+          .documents("api::user-book-mark.user-book-mark")
+          .findMany({
+            filters: { user: { id: userId } },
+            populate: ["bookmarks"],
+          });
+        // console.log("userBookmark", userBookmark);
+        if (userBookmark && userBookmark.length > 0) {
+          const updatedBookmarks = removeItemById(
+            userBookmark[0]?.bookmarks,
+            bookmarkId
+          );
+          // console.log("updatedBookmarks", updatedBookmarks);
+          await strapi.documents("api::user-book-mark.user-book-mark").update({
+            documentId: userBookmark[0]?.documentId,
+            data: { bookmarks: updatedBookmarks },
+          });
+          return {
+            success: true,
+            data: updatedBookmarks,
+          };
+        }
+        return { success: false, message: "not found" };
+      } catch (error) {
+        throw error;
+      }
+    },
+    fetchBookmarkStatus: async (ctx) => {
+      try {
+        const { url } = ctx.query;
+        const userId = ctx.state.user.id;
+        console.log("bookmarkUrl", url);
+        const userBookmark = await strapi
+          .documents("api::user-book-mark.user-book-mark")
+          .findMany({
+            filters: { user: { id: userId } },
+            populate: ["bookmarks"],
+          });
+        // console.log("userBookmark", userBookmark);
+        if (userBookmark && userBookmark.length > 0) {
+          const status = isUrlFound(userBookmark[0]?.bookmarks, url);
+          return {
+            success: true,
             data: {
-              user: {
-                id: userId,
-              },
+              bookmarkStatus: status,
+              bookmarkId: status
+                ? userBookmark[0]?.bookmarks.find((item) => item.url === url)
+                    ?.id
+                : null,
+            },
+          };
+        }
+        return { success: false, message: "not found" };
+      } catch (error) {
+        throw error;
+      }
+    },
+    addBookmark: async (ctx) => {
+      try {
+        const userId = ctx.state.user.id;
+        const bookmark = ctx.request.body;
+        const userBookmarkRecord = await strapi
+          .documents("api::user-book-mark.user-book-mark")
+          .findMany({
+            filters: { user: { id: userId } },
+            populate: ["bookmarks"],
+          });
+        // console.log("userBookmark", userBookmark);
+        if (userBookmarkRecord && userBookmarkRecord.length > 0) {
+          const updatedBookmarks = [
+            ...userBookmarkRecord[0]?.bookmarks,
+            bookmark,
+          ];
+          await strapi.documents("api::user-book-mark.user-book-mark").update({
+            documentId: userBookmarkRecord[0]?.documentId,
+            data: { bookmarks: updatedBookmarks },
+          });
+          return {
+            success: true,
+            data: {
+              bookmarkStatus: true,
+              bookmarkId: userBookmarkRecord[0]?.bookmarks.find(
+                (item) => item.url === bookmark.url
+              )?.id,
+            },
+          };
+        }
+        const newUserBookmarkRecord = await strapi
+          .documents("api::user-book-mark.user-book-mark")
+          .create({
+            data: {
+              user: userId,
               bookmarks: [bookmark],
             },
-          }
-        );
-        return newBookmark;
-      } else {
-        const oldBookmarks = userBookmark[0]?.bookmarks;
-        // console.log(oldBookmarks)
-        if (!isUrlFound(oldBookmarks, bookmark.url)) {
-          oldBookmarks.push(bookmark);
-          await strapi.entityService.update(
-            "api::user-book-mark.user-book-mark",
-            userBookmark[0]?.id,
-            {
-              data: {
-                bookmarks: oldBookmarks,
-              },
-            }
-          );
-          return oldBookmarks;
-        } else {
-          const updatedBookmarks = removeItemByUrl(oldBookmarks, bookmark.url);
-          await strapi.entityService.update(
-            "api::user-book-mark.user-book-mark",
-            userBookmark[0]?.id,
-            {
-              data: {
-                bookmarks: updatedBookmarks,
-              },
-            }
-          );
-          return updatedBookmarks;
+            populate: ["bookmarks"],
+          });
+        if (newUserBookmarkRecord) {
+          return {
+            success: true,
+            data: {
+              bookmarkStatus: true,
+              bookmarkId: newUserBookmarkRecord?.bookmarks.find(
+                (item) => item.url === bookmark.url
+              )?.id,
+            },
+          };
         }
-      }
-    },
-    async getBookmarkStatus(userId, bookmark) {
-      const userBookmark = await strapi
-        .service("api::user-book-mark.user-book-mark")
-        .getUserBookmarks(userId);
-      // console.log(userBookmark, bookmark?.url)
-      if (userBookmark?.length === 0) {
-        return false;
-      } else {
-        const oldBookmarks = userBookmark[0]?.bookmarks;
-        if (!isUrlFound(oldBookmarks, bookmark.url)) {
-          return false;
-        } else {
-          return true;
-        }
+        return { success: false, message: "not found" };
+      } catch (error) {
+        throw error;
       }
     },
   })

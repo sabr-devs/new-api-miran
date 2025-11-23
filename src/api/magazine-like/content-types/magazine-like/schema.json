@@ -11,9 +11,6 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "date": {
-      "type": "datetime"
-    },
     "users": {
       "type": "relation",
       "relation": "manyToMany",

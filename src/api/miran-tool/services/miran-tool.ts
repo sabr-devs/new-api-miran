@@ -2,84 +2,121 @@
  * miran-tool service
  */
 
-import { factories } from '@strapi/strapi';
+import { factories } from "@strapi/strapi";
 
-export default factories.createCoreService('api::miran-tool.miran-tool', ({ strapi }) => ({
-      getAllTools: async () => {
-    const tools = await strapi.entityService.findMany(
-      "api::miran-tool.miran-tool",
-      {
-        status: "published",
-        sort: ['createdAt:desc'],
-        fields: ['name', 'slug', 'issue_number', 'createdAt','issue_date','excerpt'],
-        populate: {
-          img: {
-            fields: ["url", "width", "height"],
-          },
-
-        },
-      }
-    );
-    return tools;
-  },
-  getSingleTool: async (slug) => {
-    const tool = await strapi.entityService.findMany(
-      "api::miran-tool.miran-tool",
-      {
-        filters: {
-          slug: {
-            $eq: slug,
-          },
-        },
-        fields: ['name', 'excerpt', 'slug', 'issue_number', 'createdAt','download_count','issue_date'],
-        populate: {
-          img: {
-            fields: ["url", "width", "height"],
-          }
-        },
-      }
-    );
-    if (tool) {
-      return tool
-    }
-    return null
-  },
-  getToolIssuePdf: async (userId,slug) => {
-    const isAllowed = await strapi.service("api::user-profile.user-profile").findOneByUser(userId);
-    console.log(isAllowed[0]?.status)
-    if (isAllowed[0]?.status) {
-    const toolPdf = await strapi.entityService.findMany(
-      "api::miran-tool.miran-tool",
-      {
-        filters: {
-          slug: {
-            $eq: slug,
-          },
-        },
-        fields: ['download_count'],
-        populate: {
-          pdf: {
-            fields: ["url", "width", "height"],
-          }
-        },
-      }
-    );
-    if (toolPdf) {
-      const updateToolPdf = await strapi.entityService.update(
-        "api::miran-tool.miran-tool",
-        toolPdf[0].id,
-        {
-          data: {
-            download_count: +toolPdf[0].download_count + 1
-          }
+export default factories.createCoreService(
+  "api::miran-tool.miran-tool",
+  ({ strapi }) => ({
+    getMiranTools: async (ctx) => {
+      try {
+        const { page = 1, pageSize = 10, sort = "createdAt:desc" } = ctx.query;
+        const filters: any = {};
+        const tools = await strapi
+          .documents("api::miran-tool.miran-tool")
+          .findMany({
+            filters,
+            populate: {
+              tool_cover: {
+                fields: ["url", "width", "height"],
+              },
+              tool_like: {
+                populate: {
+                  users: {
+                    fields: ["id", "fullname", "email"],
+                  },
+                },
+              },
+            },
+            start: (page - 1) * pageSize,
+            limit: pageSize,
+            sort,
+          });
+        if (!tools) {
+          return {
+            success: false,
+            message: "No tools found",
+          };
         }
-      )
+        // calculate like count for each magazine
+        const toolsWithLikeCount = tools.map((tool) => {
+          const likeCount = tool?.tool_like?.users?.length || 0;
+          // convert magazine to plain object to allow editing
+          const toolsData = JSON.parse(JSON.stringify(tool));
+          // remove magazine_like field
+          delete toolsData.tool_like;
+          // add like count instead
+          toolsData.toolLikeCount = likeCount;
+          return toolsData;
+        });
+        return {
+          success: true,
+          data: toolsWithLikeCount,
+          meta: {
+            page: parseInt(page),
+            pageSize: parseInt(pageSize),
+            total: await strapi
+              .documents("api::miran-tool.miran-tool")
+              .count(filters),
+          },
+        };
+      } catch (error) {
+        throw error;
+      }
+    },
+    getMiranToolBySlug: async (ctx) => {
+      try {
+        const { slug } = ctx.params;
+        const tool = await strapi
+          .documents("api::miran-tool.miran-tool")
+          .findMany({
+            filters: { slug: slug },
+            populate: {
+              tool_cover: {
+                fields: ["url", "width", "height"],
+              },
+              tool_like: {
+                populate: {
+                  users: {
+                    fields: ["id", "fullname", "email"],
+                    populate: { user_book_marks: true },
+                  },
+                },
+              },
+              pdf_file: {
+                populate: {
+                  file: {
+                    fields: ["url", "width", "height"],
+                  },
+                },
+              },
+              sections: true,
+            },
+          });
+        if (!tool || tool.length === 0) {
+          return {
+            success: false,
+            message: "tool not found",
+          };
+        }
+        // calculate like count
+        const toolLikeCount =
+          tool[0]?.tool_like?.users?.length || 0;
 
-      return {...toolPdf[0], download_count: updateToolPdf.download_count}
-    }
-    return null
-  } else {
-    return null
-  }
-  }
-}));
+        // convert tool[0] to plain object to allow editing
+        const toolData = JSON.parse(JSON.stringify(tool[0]));
+
+        // remove magazine_like field
+        delete toolData.tool_like;
+
+        // add like count instead
+        toolData.toolLikeCount = toolLikeCount;
+        return {
+          success: true,
+          data: toolData,
+        };
+      } catch (error) {
+        throw error;
+      }
+    },
+  })
+);
